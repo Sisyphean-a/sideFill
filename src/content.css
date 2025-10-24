@@ -1,0 +1,5 @@
+/* Content script CSS - minimal styles for the host element */
+#hover-fill-sidebar-host {
+  all: initial;
+}
+

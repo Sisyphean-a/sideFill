@@ -1,0 +1,153 @@
+# Hover-Fill Sidebar Chrome 扩展
+
+一个 Chrome 浏览器扩展，在浏览器窗口的最右侧边缘生成一个 2px 宽的触碰区域。当鼠标悬停在此区域时，会滑出一个侧边栏面板，显示预设的文本值。当鼠标悬停在任意一行上超过 1 秒钟时，该行的值将自动填充到当前网页上处于活动状态的输入框中。
+
+## 功能特性
+
+- 🎯 **快速调出**：鼠标甩到最右侧即可调出侧边栏
+- ⏱️ **悬停填充**：悬停 1 秒自动填充，无需点击
+- 🔒 **样式隔离**：使用 Shadow DOM 确保扩展 UI 不受网页 CSS 影响
+- 📝 **易于管理**：在选项页面轻松添加、编辑、删除预设值
+- 🌐 **兼容性强**：支持 React、Vue 等现代框架的表单
+- 💾 **本地存储**：所有数据保存在本地，无需云同步
+
+## 安装方法
+
+### 开发模式安装
+
+1. **克隆或下载项目**
+   ```bash
+   git clone <repository-url>
+   cd sideFill
+   ```
+
+2. **安装依赖**
+   ```bash
+   npm install
+   ```
+
+3. **构建扩展**
+   ```bash
+   npm run build
+   ```
+
+4. **加载到 Chrome**
+   - 打开 Chrome 浏览器
+   - 访问 `chrome://extensions/`
+   - 启用"开发者模式"（右上角开关）
+   - 点击"加载已解压的扩展程序"
+   - 选择项目目录下的 `dist` 文件夹
+
+## 使用方法
+
+### 1. 配置预设值
+
+1. 在 Chrome 扩展菜单中找到"Hover-Fill Sidebar"
+2. 点击"选项"或在 `chrome://extensions` 中点击"选项"
+3. 在打开的选项页面中：
+   - 输入"标签"（如：我的邮箱）
+   - 输入"值"（如：example@123.com）
+   - 点击"添加"按钮
+4. 已保存的预设值会显示在下方列表中
+
+### 2. 使用侧边栏填充表单
+
+1. 打开任何网页
+2. 将鼠标移动到浏览器窗口的**最右侧边缘**
+3. 侧边栏会自动滑出，显示所有预设值
+4. 将鼠标悬停在想要填充的预设值上，**保持 1 秒**
+5. 该值会自动填充到当前活动的输入框中
+
+### 3. 管理预设值
+
+在选项页面中，每个预设值都有两个按钮：
+- **编辑**：修改该预设值
+- **删除**：删除该预设值
+
+## 项目结构
+
+```
+sideFill/
+├── src/
+│   ├── manifest.json          # Chrome 扩展清单
+│   ├── options.html           # 选项页面 HTML
+│   ├── options.ts             # 选项页面入口
+│   ├── OptionsApp.vue         # Vue 3 选项页面组件
+│   ├── content.ts             # Content Script（核心功能）
+│   └── content.css            # Content Script 样式
+├── dist/                      # 构建输出目录
+├── package.json               # 项目依赖配置
+├── vite.config.ts             # Vite 构建配置
+├── tsconfig.json              # TypeScript 配置
+└── README.md                  # 本文件
+```
+
+## 技术栈
+
+- **清单版本**：Manifest V3 (MV3)
+- **核心语言**：TypeScript + JavaScript (ES6+)
+- **选项页面**：Vue 3
+- **构建工具**：Vite
+- **UI 隔离**：Shadow DOM
+- **数据存储**：chrome.storage.local
+
+## 开发命令
+
+```bash
+# 安装依赖
+npm install
+
+# 开发模式（监听文件变化）
+npm run dev
+
+# 生产构建
+npm run build
+
+# 预览构建结果
+npm run preview
+```
+
+## 工作原理
+
+### Content Script 流程
+
+1. **初始化**：页面加载时，Content Script 自动执行
+2. **跟踪输入框**：监听 `focusin` 事件，记录当前活动的输入框
+3. **创建 UI**：在 Shadow DOM 中创建 2px 触发条和侧边栏
+4. **加载数据**：从 `chrome.storage.local` 读取预设值
+5. **交互处理**：
+   - 鼠标进入触发条 → 侧边栏滑出
+   - 鼠标离开侧边栏 → 侧边栏滑入
+   - 鼠标悬停在预设值上 1 秒 → 自动填充
+
+### 填充机制
+
+为了兼容 React、Vue 等现代框架，填充函数会：
+1. 设置输入框的 `value` 属性
+2. 派发 `input` 事件
+3. 派发 `change` 事件
+
+这确保框架能够正确检测到值的变化。
+
+## 常见问题
+
+### Q: 为什么填充不工作？
+A: 确保：
+1. 输入框已获得焦点（有光标）
+2. 预设值已在选项页面中添加
+3. 扩展已正确加载（检查 `chrome://extensions`）
+
+### Q: 如何修改侧边栏的样式？
+A: 编辑 `src/content.ts` 中的 CSS 样式部分，然后重新构建。
+
+### Q: 数据会被同步到其他设备吗？
+A: 不会。数据仅保存在本地，使用 `chrome.storage.local`。如需同步，可修改为 `chrome.storage.sync`。
+
+## 许可证
+
+MIT
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
