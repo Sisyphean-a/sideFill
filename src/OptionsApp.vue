@@ -66,6 +66,142 @@
       </div>
     </div>
 
+    <!-- 触发区域配置 -->
+    <div class="form-section">
+      <h2 style="color: #333; font-size: 18px; margin-bottom: 15px;">🎯 触发区域配置</h2>
+
+      <div class="form-group">
+        <label>触发区域可视化</label>
+        <button
+          @click="toggleTriggerAreaVisualization"
+          :style="{
+            backgroundColor: showTriggerAreaVisualization ? '#4CAF50' : '#999',
+            color: 'white',
+            padding: '8px 16px',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            transition: 'all 0.3s ease'
+          }"
+        >
+          {{ showTriggerAreaVisualization ? '✓ 显示中' : '隐藏' }}
+        </button>
+        <small style="color: #999; font-size: 12px; margin-top: 5px; display: block;">
+          点击按钮在打开的网页上显示/隐藏触发区域的绿色指示器
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="triggerPosition">触发区域位置</label>
+        <select v-model="triggerAreaConfig.position" id="triggerPosition" @change="saveTriggerAreaConfig">
+          <option value="right">右侧</option>
+          <option value="left">左侧</option>
+          <option value="top">顶部</option>
+          <option value="bottom">底部</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="triggerWidth">触发区域宽度 (px): {{ triggerAreaConfig.width }}</label>
+        <input
+          v-model.number="triggerAreaConfig.width"
+          type="range"
+          id="triggerWidth"
+          min="1"
+          max="50"
+          step="1"
+          @change="saveTriggerAreaConfig"
+        >
+        <small style="color: #999; font-size: 12px; margin-top: 5px; display: block;">
+          触发区域的宽度（或高度，取决于位置）
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="triggerHeightMode">高度模式</label>
+        <select v-model="triggerAreaConfig.heightMode" id="triggerHeightMode" @change="saveTriggerAreaConfig">
+          <option value="full">全屏</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+
+      <div v-if="triggerAreaConfig.heightMode === 'custom'" class="form-group">
+        <label for="triggerCustomHeight">自定义高度 (px): {{ triggerAreaConfig.customHeight }}</label>
+        <input
+          v-model.number="triggerAreaConfig.customHeight"
+          type="range"
+          id="triggerCustomHeight"
+          min="50"
+          max="800"
+          step="10"
+          @change="saveTriggerAreaConfig"
+        >
+      </div>
+
+      <div v-if="triggerAreaConfig.heightMode === 'custom'" class="form-group">
+        <label for="triggerAlignment">对齐方式</label>
+        <select v-model="triggerAreaConfig.alignment" id="triggerAlignment" @change="saveTriggerAreaConfig">
+          <option value="start">开始</option>
+          <option value="center">居中</option>
+          <option value="end">结束</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="triggerOffset">偏移量 (px): {{ triggerAreaConfig.offset }}</label>
+        <input
+          v-model.number="triggerAreaConfig.offset"
+          type="range"
+          id="triggerOffset"
+          min="0"
+          max="100"
+          step="1"
+          @change="saveTriggerAreaConfig"
+        >
+        <small style="color: #999; font-size: 12px; margin-top: 5px; display: block;">
+          触发区域距离屏幕边缘的距离
+        </small>
+      </div>
+
+      <!-- 触发区域预览 -->
+      <div class="form-group">
+        <label>📺 触发区域预览</label>
+        <div class="preview-info">
+          <div class="preview-info-item">
+            <span class="preview-info-label">位置:</span>
+            <span class="preview-info-value">{{ getPositionLabel(triggerAreaConfig.position) }}</span>
+          </div>
+          <div class="preview-info-item">
+            <span class="preview-info-label">大小:</span>
+            <span class="preview-info-value">{{ triggerAreaConfig.width }}px</span>
+          </div>
+          <div class="preview-info-item">
+            <span class="preview-info-label">高度模式:</span>
+            <span class="preview-info-value">{{ triggerAreaConfig.heightMode === 'full' ? '全屏' : `自定义 (${triggerAreaConfig.customHeight}px)` }}</span>
+          </div>
+          <div v-if="triggerAreaConfig.heightMode === 'custom'" class="preview-info-item">
+            <span class="preview-info-label">对齐:</span>
+            <span class="preview-info-value">{{ getAlignmentLabel(triggerAreaConfig.alignment) }}</span>
+          </div>
+          <div class="preview-info-item">
+            <span class="preview-info-label">偏移:</span>
+            <span class="preview-info-value">{{ triggerAreaConfig.offset }}px</span>
+          </div>
+        </div>
+        <div :style="getTriggerAreaPreviewStyle()">
+          <div :style="getTriggerIndicatorStyle()">
+            <div style="padding: 4px 8px; font-size: 11px; color: #4CAF50; font-weight: bold;">
+              触发区域
+            </div>
+          </div>
+        </div>
+        <small style="color: #999; font-size: 12px; margin-top: 5px; display: block;">
+          绿色虚线区域表示触发区域的位置和大小（缩放显示）
+        </small>
+      </div>
+    </div>
+
     <!-- 分类管理区域 -->
     <div class="form-section">
       <h2 style="color: #333; font-size: 18px; margin-bottom: 15px;">📁 分类管理</h2>
@@ -229,6 +365,7 @@ const editingIndex = ref<number | null>(null)
 const categories = ref<string[]>([])
 const newCategory = ref<string>('')
 const selectedCategory = ref<string>('all')
+const showTriggerAreaVisualization = ref<boolean>(true)
 
 // 样式设置
 interface StyleSettings {
@@ -238,6 +375,15 @@ interface StyleSettings {
   hoverDuration: number
 }
 
+interface TriggerAreaConfig {
+  width: number
+  position: 'left' | 'right' | 'top' | 'bottom'
+  heightMode: 'full' | 'custom'
+  customHeight?: number
+  alignment: 'start' | 'center' | 'end'
+  offset: number
+}
+
 const styleSettings = ref<StyleSettings>({
   sidebarWidth: 300,
   primaryColor: '#4CAF50',
@@ -245,12 +391,21 @@ const styleSettings = ref<StyleSettings>({
   hoverDuration: 1000
 })
 
+const triggerAreaConfig = ref<TriggerAreaConfig>({
+  width: 2,
+  position: 'right',
+  heightMode: 'full',
+  customHeight: 300,
+  alignment: 'start',
+  offset: 0
+})
+
 const fileInput = ref<HTMLInputElement | null>(null)
 
 // 加载数据
 onMounted(async () => {
   try {
-    const result = await chrome.storage.local.get(['presets', 'categories', 'styleSettings'])
+    const result = await chrome.storage.local.get(['presets', 'categories', 'styleSettings', 'triggerAreaConfig'])
     if (result.presets) {
       // 处理两种格式：数组或对象
       if (Array.isArray(result.presets)) {
@@ -265,6 +420,9 @@ onMounted(async () => {
     }
     if (result.styleSettings) {
       styleSettings.value = { ...styleSettings.value, ...result.styleSettings }
+    }
+    if (result.triggerAreaConfig) {
+      triggerAreaConfig.value = { ...triggerAreaConfig.value, ...result.triggerAreaConfig }
     }
   } catch (error) {
     console.error('Failed to load presets:', error)
@@ -293,7 +451,8 @@ const saveToStorage = async () => {
     await chrome.storage.local.set({
       presets: items.value,
       categories: categories.value,
-      styleSettings: styleSettings.value
+      styleSettings: styleSettings.value,
+      triggerAreaConfig: triggerAreaConfig.value
     })
   } catch (error) {
     console.error('Failed to save presets:', error)
@@ -305,6 +464,170 @@ const saveToStorage = async () => {
 const saveStyleSettings = async () => {
   await saveToStorage()
   showMessage('样式设置已保存', 'success')
+}
+
+// 保存触发区域配置
+const saveTriggerAreaConfig = async () => {
+  await saveToStorage()
+  showMessage('触发区域配置已保存', 'success')
+}
+
+// 切换触发区域可视化
+const toggleTriggerAreaVisualization = async () => {
+  showTriggerAreaVisualization.value = !showTriggerAreaVisualization.value
+
+  // 发送消息到所有标签页，告诉它们是否显示触发区域
+  chrome.tabs.query({}, (tabs) => {
+    tabs.forEach(tab => {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          type: 'TOGGLE_TRIGGER_AREA_VISUALIZATION',
+          show: showTriggerAreaVisualization.value
+        }).catch(() => {
+          // 忽略错误，某些标签页可能不支持消息
+        })
+      }
+    })
+  })
+
+  showMessage(
+    showTriggerAreaVisualization.value ? '触发区域已显示' : '触发区域已隐藏',
+    'success'
+  )
+}
+
+// 获取位置标签
+const getPositionLabel = (position: string): string => {
+  const labels: Record<string, string> = {
+    'right': '右侧',
+    'left': '左侧',
+    'top': '顶部',
+    'bottom': '底部'
+  }
+  return labels[position] || position
+}
+
+// 获取对齐标签
+const getAlignmentLabel = (alignment: string): string => {
+  const labels: Record<string, string> = {
+    'start': '开始',
+    'center': '居中',
+    'end': '结束'
+  }
+  return labels[alignment] || alignment
+}
+
+// 获取触发区域预览样式
+const getTriggerAreaPreviewStyle = () => {
+  const config = triggerAreaConfig.value
+  const previewWidth = 400
+  const previewHeight = 300
+
+  let style: Record<string, string> = {
+    position: 'relative',
+    width: `${previewWidth}px`,
+    height: `${previewHeight}px`,
+    border: '2px solid #ddd',
+    borderRadius: '4px',
+    backgroundColor: '#f9f9f9',
+    overflow: 'hidden'
+  }
+
+  return style
+}
+
+// 获取触发区域指示器样式
+const getTriggerIndicatorStyle = () => {
+  const config = triggerAreaConfig.value
+  const previewWidth = 400
+  const previewHeight = 300
+
+  let style: Record<string, string> = {
+    position: 'absolute',
+    background: 'linear-gradient(90deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.05) 100%)',
+    border: '2px dashed rgba(76, 175, 80, 0.6)',
+    boxSizing: 'border-box'
+  }
+
+  // 计算缩放比例
+  const scaleX = previewWidth / window.innerWidth
+  const scaleY = previewHeight / window.innerHeight
+
+  if (config.position === 'right') {
+    const width = Math.max(config.width * scaleX, 2)
+    const offset = config.offset * scaleX
+    style.right = `${offset}px`
+    style.top = '0'
+    style.width = `${width}px`
+
+    if (config.heightMode === 'full') {
+      style.height = '100%'
+    } else if (config.customHeight) {
+      const height = Math.min(config.customHeight * scaleY, previewHeight)
+      style.height = `${height}px`
+      if (config.alignment === 'center') {
+        style.top = `${(previewHeight - height) / 2}px`
+      } else if (config.alignment === 'end') {
+        style.top = `${previewHeight - height}px`
+      }
+    }
+  } else if (config.position === 'left') {
+    const width = Math.max(config.width * scaleX, 2)
+    const offset = config.offset * scaleX
+    style.left = `${offset}px`
+    style.top = '0'
+    style.width = `${width}px`
+
+    if (config.heightMode === 'full') {
+      style.height = '100%'
+    } else if (config.customHeight) {
+      const height = Math.min(config.customHeight * scaleY, previewHeight)
+      style.height = `${height}px`
+      if (config.alignment === 'center') {
+        style.top = `${(previewHeight - height) / 2}px`
+      } else if (config.alignment === 'end') {
+        style.top = `${previewHeight - height}px`
+      }
+    }
+  } else if (config.position === 'top') {
+    const height = Math.max(config.width * scaleY, 2)
+    const offset = config.offset * scaleY
+    style.top = `${offset}px`
+    style.left = '0'
+    style.height = `${height}px`
+
+    if (config.heightMode === 'full') {
+      style.width = '100%'
+    } else if (config.customHeight) {
+      const width = Math.min(config.customHeight * scaleX, previewWidth)
+      style.width = `${width}px`
+      if (config.alignment === 'center') {
+        style.left = `${(previewWidth - width) / 2}px`
+      } else if (config.alignment === 'end') {
+        style.left = `${previewWidth - width}px`
+      }
+    }
+  } else if (config.position === 'bottom') {
+    const height = Math.max(config.width * scaleY, 2)
+    const offset = config.offset * scaleY
+    style.bottom = `${offset}px`
+    style.left = '0'
+    style.height = `${height}px`
+
+    if (config.heightMode === 'full') {
+      style.width = '100%'
+    } else if (config.customHeight) {
+      const width = Math.min(config.customHeight * scaleX, previewWidth)
+      style.width = `${width}px`
+      if (config.alignment === 'center') {
+        style.left = `${(previewWidth - width) / 2}px`
+      } else if (config.alignment === 'end') {
+        style.left = `${previewWidth - width}px`
+      }
+    }
+  }
+
+  return style
 }
 
 // 添加分类
@@ -419,7 +742,9 @@ const exportPresets = () => {
     version: '1.0',
     exportDate: new Date().toISOString(),
     presets: items.value,
-    categories: categories.value
+    categories: categories.value,
+    styleSettings: styleSettings.value,
+    triggerAreaConfig: triggerAreaConfig.value
   }
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -488,6 +813,12 @@ const importPresets = async (event: Event) => {
       items.value = data.presets
       if (data.categories && Array.isArray(data.categories)) {
         categories.value = data.categories
+      }
+      if (data.styleSettings) {
+        styleSettings.value = { ...styleSettings.value, ...data.styleSettings }
+      }
+      if (data.triggerAreaConfig) {
+        triggerAreaConfig.value = { ...triggerAreaConfig.value, ...data.triggerAreaConfig }
       }
       showMessage(`成功导入 ${data.presets.length} 个预设值`, 'success')
     }
@@ -652,6 +983,63 @@ input[type="color"] {
 .import-export-buttons button {
   padding: 8px 16px;
   font-size: 13px;
+}
+
+.trigger-preview-container {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.trigger-preview {
+  position: relative;
+  width: 400px;
+  height: 300px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.trigger-preview-label {
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.preview-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.preview-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-info-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+}
+
+.preview-info-value {
+  font-size: 13px;
+  color: #333;
+  padding: 4px 8px;
+  background: white;
+  border-radius: 3px;
+  border-left: 3px solid #4CAF50;
 }
 </style>
 

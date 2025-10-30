@@ -95,6 +95,119 @@ let primaryColor = '#4CAF50'
 let fontSize = 13
 let hoverDuration = 1000 // 默认1秒
 
+// 触发区域配置
+interface TriggerAreaConfig {
+  width: number // 触发区域宽度 (px)
+  position: 'left' | 'right' | 'top' | 'bottom' // 位置
+  heightMode: 'full' | 'custom' // 高度模式
+  customHeight?: number // 自定义高度 (px)
+  alignment: 'start' | 'center' | 'end' // 对齐方式
+  offset: number // 偏移量 (px)
+}
+
+let triggerAreaConfig: TriggerAreaConfig = {
+  width: 2,
+  position: 'right',
+  heightMode: 'full',
+  alignment: 'start',
+  offset: 0
+}
+
+// 触发区域可视化状态
+let showTriggerAreaVisualization = true
+
+// 生成触发区域样式
+function getTriggerAreaStyles(): string {
+  const config = triggerAreaConfig
+  const visibility = showTriggerAreaVisualization ? 'visible' : 'hidden'
+
+  let styles = `
+    .trigger-area {
+      position: fixed;
+      cursor: pointer;
+      z-index: 2147483646;
+      background: linear-gradient(90deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.05) 100%);
+      border: 1px dashed rgba(76, 175, 80, 0.3);
+      transition: all 0.3s ease;
+      visibility: ${visibility};
+    }
+
+    .trigger-area:hover {
+      background: linear-gradient(90deg, rgba(76, 175, 80, 0.25) 0%, rgba(76, 175, 80, 0.15) 100%);
+      border-color: rgba(76, 175, 80, 0.6);
+      box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.2);
+    }
+
+    .trigger-area::before {
+      content: '';
+      position: absolute;
+      background: linear-gradient(45deg, transparent 48%, rgba(76, 175, 80, 0.4) 49%, rgba(76, 175, 80, 0.4) 51%, transparent 52%);
+      pointer-events: none;
+    }
+  `
+
+  // 根据位置设置样式
+  if (config.position === 'right') {
+    styles += `
+      right: ${config.offset}px;
+      top: 0;
+      width: ${config.width}px;
+    `
+    styles += `.trigger-area::before { width: 100%; height: 100%; }`
+  } else if (config.position === 'left') {
+    styles += `
+      left: ${config.offset}px;
+      top: 0;
+      width: ${config.width}px;
+    `
+    styles += `.trigger-area::before { width: 100%; height: 100%; }`
+  } else if (config.position === 'top') {
+    styles += `
+      top: ${config.offset}px;
+      left: 0;
+      height: ${config.width}px;
+    `
+    styles += `.trigger-area::before { width: 100%; height: 100%; }`
+  } else if (config.position === 'bottom') {
+    styles += `
+      bottom: ${config.offset}px;
+      left: 0;
+      height: ${config.width}px;
+    `
+    styles += `.trigger-area::before { width: 100%; height: 100%; }`
+  }
+
+  // 设置高度/宽度
+  if (config.heightMode === 'full') {
+    if (config.position === 'left' || config.position === 'right') {
+      styles += `height: 100vh;`
+    } else {
+      styles += `width: 100vw;`
+    }
+  } else if (config.heightMode === 'custom' && config.customHeight) {
+    if (config.position === 'left' || config.position === 'right') {
+      styles += `height: ${config.customHeight}px;`
+      // 应用对齐方式
+      if (config.alignment === 'center') {
+        styles += `top: 50%; transform: translateY(-50%);`
+      } else if (config.alignment === 'end') {
+        styles += `bottom: 0;`
+      }
+    } else {
+      styles += `width: ${config.customHeight}px;`
+      // 应用对齐方式
+      if (config.alignment === 'center') {
+        styles += `left: 50%; transform: translateX(-50%);`
+      } else if (config.alignment === 'end') {
+        styles += `right: 0;`
+      }
+    }
+  }
+
+  styles += `}`
+  return styles
+}
+
 // 生成侧边栏样式
 function getSidebarStyles(): string {
   const hoverColor = adjustColor(primaryColor, -10)
@@ -110,16 +223,7 @@ function getSidebarStyles(): string {
       --font-size: ${fontSize}px;
     }
 
-    .trigger-area {
-      position: fixed;
-      right: 0;
-      top: 0;
-      width: 2px;
-      height: 100vh;
-      cursor: pointer;
-      z-index: 2147483646;
-      background: transparent;
-    }
+    ${getTriggerAreaStyles()}
 
     .resize-handle {
       position: absolute;
@@ -138,21 +242,68 @@ function getSidebarStyles(): string {
 
     .sidebar {
       position: fixed;
-      right: calc(-1 * var(--sidebar-width));
-      top: 0;
-      width: var(--sidebar-width);
-      height: 100vh;
       background: var(--bg-color);
-      border-left: 1px solid var(--border-color);
       box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
-      transition: right 0.3s ease;
+      transition: all 0.3s ease;
       z-index: 2147483645;
       overflow-y: auto;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
-    .sidebar.visible {
+    /* 右侧侧边栏 */
+    .sidebar.position-right {
+      right: calc(-1 * var(--sidebar-width));
+      top: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      border-left: 1px solid var(--border-color);
+    }
+
+    .sidebar.position-right.visible {
       right: 0;
+    }
+
+    /* 左侧侧边栏 */
+    .sidebar.position-left {
+      left: calc(-1 * var(--sidebar-width));
+      top: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .sidebar.position-left.visible {
+      left: 0;
+    }
+
+    /* 顶部侧边栏 */
+    .sidebar.position-top {
+      top: calc(-1 * var(--sidebar-width));
+      left: 0;
+      width: 100vw;
+      height: var(--sidebar-width);
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .sidebar.position-top.visible {
+      top: 0;
+    }
+
+    /* 底部侧边栏 */
+    .sidebar.position-bottom {
+      bottom: calc(-1 * var(--sidebar-width));
+      left: 0;
+      width: 100vw;
+      height: var(--sidebar-width);
+      border-top: 1px solid var(--border-color);
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .sidebar.position-bottom.visible {
+      bottom: 0;
     }
 
     .sidebar-header {
@@ -162,10 +313,27 @@ function getSidebarStyles(): string {
       font-weight: 600;
       color: var(--text-color);
       font-size: 14px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .sidebar.position-top .sidebar-header,
+    .sidebar.position-bottom .sidebar-header {
+      border-bottom: none;
+      border-right: 1px solid var(--border-color);
+      padding: 10px 15px;
     }
 
     .sidebar-content {
       padding: 10px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.position-top .sidebar-content,
+    .sidebar.position-bottom .sidebar-content {
+      flex-direction: row;
+      padding: 0 10px;
     }
 
     .preset-row {
@@ -175,6 +343,14 @@ function getSidebarStyles(): string {
       transition: all 0.2s;
       user-select: none;
       position: relative;
+    }
+
+    .sidebar.position-top .preset-row,
+    .sidebar.position-bottom .preset-row {
+      border-bottom: none;
+      border-right: 1px solid #f0f0f0;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .preset-row:hover {
@@ -274,17 +450,21 @@ function initializeSidebar(): void {
   // 创建 Shadow Root
   const shadowRoot = hostElement.attachShadow({ mode: 'open' })
 
-  // 加载样式设置
-  chrome.storage.local.get('styleSettings', (result: Record<string, any>) => {
+  // 加载样式设置和触发区域配置
+  chrome.storage.local.get(['styleSettings', 'triggerAreaConfig'], (result: Record<string, any>) => {
     if (result.styleSettings) {
       sidebarWidth = result.styleSettings.sidebarWidth || 300
       primaryColor = result.styleSettings.primaryColor || '#4CAF50'
       fontSize = result.styleSettings.fontSize || 13
       hoverDuration = result.styleSettings.hoverDuration || 1000
-
-      // 更新样式
-      updateSidebarStyles(shadowRoot)
     }
+
+    if (result.triggerAreaConfig) {
+      triggerAreaConfig = { ...triggerAreaConfig, ...result.triggerAreaConfig }
+    }
+
+    // 更新样式
+    updateSidebarStyles(shadowRoot)
   })
 
   // 创建样式
@@ -302,7 +482,7 @@ function initializeSidebar(): void {
 
   // 创建侧边栏
   const sidebar = document.createElement('div')
-  sidebar.className = 'sidebar'
+  sidebar.className = `sidebar position-${triggerAreaConfig.position}`
   shadowRoot.appendChild(sidebar)
 
   // 创建拖拽手柄
@@ -596,6 +776,21 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
   }
 })
 
+// 监听来自选项页面的消息
+chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+  if (request.type === 'TOGGLE_TRIGGER_AREA_VISUALIZATION') {
+    showTriggerAreaVisualization = request.show
+
+    // 更新触发区域样式
+    const hostElement = document.getElementById('hover-fill-sidebar-host')
+    if (hostElement && hostElement.shadowRoot) {
+      updateSidebarStyles(hostElement.shadowRoot)
+    }
+
+    sendResponse({ success: true })
+  }
+})
+
 // 监听存储变化以更新快捷键映射和样式
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local') {
@@ -622,6 +817,19 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         const hostElement = document.getElementById('hover-fill-sidebar-host')
         if (hostElement && hostElement.shadowRoot) {
           updateSidebarStyles(hostElement.shadowRoot)
+        }
+      }
+    }
+    if (changes.triggerAreaConfig) {
+      const config = changes.triggerAreaConfig.newValue
+      if (config) {
+        triggerAreaConfig = { ...triggerAreaConfig, ...config }
+
+        // 重新渲染侧边栏以应用新的位置配置
+        const hostElement = document.getElementById('hover-fill-sidebar-host')
+        if (hostElement) {
+          hostElement.remove()
+          initializeSidebar()
         }
       }
     }
